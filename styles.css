@@ -936,9 +936,11 @@ img {
   overflow: hidden;
   min-height: 44px;
   max-height: 44px;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.1;
+  color: #171512;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   transition: color 0.22s ease;
@@ -1860,8 +1862,10 @@ img {
   .product-name {
     min-height: 38px;
     max-height: 38px;
-    font-size: 17px;
-    line-height: 1.12;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
   }
 
   .meta,
