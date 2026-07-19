@@ -816,6 +816,18 @@ img {
   transition: transform 0.55s cubic-bezier(0.2, 0.75, 0.18, 1), filter 0.45s ease;
 }
 
+.product-card[data-section-id="home-trending"] .product-media img {
+  object-position: center top;
+}
+
+.product-card[data-section-id="home-new-arrivals"] .product-media img {
+  object-position: center top;
+}
+
+.product-card[data-section-id="home-best-sellers"] .product-media img {
+  object-position: center top;
+}
+
 .product-media img,
 .suggestion img,
 .thumbs img,

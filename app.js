@@ -823,6 +823,7 @@ let selected = {};
 let orderPlaced = load("afree-order", null);
 let filterOpen = false;
 let searchOpen = false;
+let previousRoutePath = "";
 let shopState = {
   audiences: [],
   categories: [],
@@ -938,8 +939,10 @@ function stockLabel(product) {
 }
 
 function productById(id) {
-  return products.find((product) => product.id === id) || products[0];
+  return homepageProductOverrides.get(id) || products.find((product) => product.id === id) || products[0];
 }
+
+const homepageProductOverrides = new Map();
 
 const homepagePhotoIds = [
   "photo-1529139574466-a303027c1d8b",
@@ -972,14 +975,30 @@ const homepagePhotoIds = [
 
 const softLuxurySources = {
   trending: [
-    "assets/velora-drop-ivory-embroidered.png",
+    "assets/velora-product-noor.png",
     "assets/velora-eastern-lilac-bagh-lawn.png",
     "assets/velora-eastern-neelam-lawn.png",
     "assets/velora-drop-peach-lawn.png",
     "assets/velora-category-accessories.png",
     "assets/velora-category-shoes.png",
-    "assets/velora-product-saira.png",
-    "assets/velora-product-zoya.png"
+    "assets/velora-category-eastern.png",
+    "assets/velora-product-mehreen.png"
+  ],
+  arrivals: [
+    "assets/velora-new-arrival-01-powder-blue-suit.png",
+    "assets/velora-new-arrival-02-blush-shirt-dress.png",
+    "assets/velora-new-arrival-03-sage-maxi-dress.png",
+    "assets/velora-new-arrival-04-ivory-satin-set.png",
+    "assets/velora-new-arrival-05-lilac-midi-dress.png",
+    "assets/velora-new-arrival-06-mint-blazer-coord.png",
+    "assets/velora-new-arrival-07-buttercream-cardigan-skirt.png",
+    "assets/velora-new-arrival-08-dusty-rose-jumpsuit.png"
+  ],
+  best: [
+    "assets/velora-best-seller-01-baggy-denim-blazer.png",
+    "assets/velora-best-seller-02-neutral-cargo.png",
+    "assets/velora-best-seller-03-oversized-blazer.png",
+    "assets/velora-best-seller-04-dove-midi-dress.png"
   ],
   looks: [
     "assets/velora-front-campaign.png",
@@ -998,11 +1017,13 @@ function imageSource(source) {
 
 function curatedProduct(product, source, overrides = {}) {
   const photo = imageSource(source);
-  return {
+  const curated = {
     ...product,
     ...overrides,
     images: [photo, ...(product.images || []).filter((item) => item !== photo)]
   };
+  homepageProductOverrides.set(curated.id, curated);
+  return curated;
 }
 
 function firstUnusedProduct(usedIds, predicate) {
@@ -1015,12 +1036,16 @@ function curatedHomepage() {
   const usedIds = new Set();
   let photoIndex = 0;
   let trendingImageIndex = 0;
+  let arrivalImageIndex = 0;
+  let bestImageIndex = 0;
   let lookImageIndex = 0;
   const pick = (predicate, overrides = {}, source = "") => {
     const product = firstUnusedProduct(usedIds, predicate) || firstUnusedProduct(usedIds, () => true);
     return curatedProduct(product, source || homepagePhotoIds[photoIndex++], overrides);
   };
   const trendPick = (predicate, overrides = {}) => pick(predicate, overrides, softLuxurySources.trending[trendingImageIndex++]);
+  const arrivalPick = (predicate, overrides = {}) => pick(predicate, overrides, softLuxurySources.arrivals[arrivalImageIndex++]);
+  const bestPick = (predicate, overrides = {}) => pick(predicate, overrides, softLuxurySources.best[bestImageIndex++]);
   const lookPick = (predicate, overrides = {}) => pick(predicate, overrides, softLuxurySources.looks[lookImageIndex++]);
 
   const trending = [
@@ -1035,21 +1060,21 @@ function curatedHomepage() {
   ];
 
   const arrivals = [
-    pick((p) => p.category === "Ready to Wear" && p.badge === "New", { name: "Blush Pink Newly Launched Suit", colors: ["Blush", "Ivory"], badge: "New" }),
-    pick((p) => p.category === "Eastern Wear" && p.badge === "New", { name: "Mint Embroidered Kurta Set", colors: ["Mint Green", "Cream"], badge: "New" }),
-    pick((p) => p.category === "Unstitched" && p.badge === "New", { name: "Peach Printed Lawn Collection", colors: ["Peach", "White"], badge: "New" }),
-    pick((p) => p.category === "Women" && p.badge === "New", { name: "Dusty Rose Casual Pret Set", colors: ["Dusty Rose", "Beige"], badge: "New" }),
-    pick((p) => p.category === "Formals" && p.badge === "New", { name: "Ivory Chiffon Semi Formal", colors: ["Ivory", "Champagne"], badge: "New" }),
-    pick((p) => p.category === "Western Wear" && p.badge === "New", { name: "Soft Grey Tailored Co-ord", colors: ["Soft Grey", "White"], badge: "New" }),
-    pick((p) => p.category === "Accessories" && p.badge === "New", { name: "Champagne Mini Shoulder Bag", colors: ["Champagne", "Nude"], badge: "New" }),
-    pick((p) => p.category === "Footwear" && p.badge === "New", { name: "Cream Minimal Block Heels", colors: ["Cream", "Gold"], badge: "New" })
+    arrivalPick((p) => p.category === "Western Wear", { name: "Powder Blue Relaxed Trouser Suit", subcategory: "Co-ord Sets", collection: "Summer Edit", occasion: "Work", material: "Soft suiting blend", colors: ["Powder Blue", "Ivory"], badge: "New", description: "A softly tailored longline blazer and wide-leg trouser set made for polished warm-weather dressing.", fit: "Relaxed modest fit with a clean blazer line and easy wide-leg trousers." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Blush Belted Shirt Dress", subcategory: "Dresses", collection: "Summer Edit", occasion: "Casual", material: "Cotton poplin blend", colors: ["Blush", "Beige"], badge: "New", description: "A full-length belted shirt dress with minimal buttons, graceful sleeves, and a polished everyday silhouette.", fit: "Defined waist with a flowing full-length skirt. Choose your usual size." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Sage Pleated Maxi Dress", subcategory: "Dresses", collection: "Summer Edit", occasion: "Party", material: "Fluid crepe", colors: ["Sage", "Ivory"], badge: "New", description: "A modest full-sleeve maxi dress with soft pleating and a refined waist treatment for elevated day-to-evening plans.", fit: "Regular fit through the shoulders with a gently flowing skirt." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Ivory Satin Tailored Set", subcategory: "Co-ord Sets", collection: "Workwear", occasion: "Work", material: "Satin and tailored suiting", colors: ["Ivory", "Beige"], badge: "New", description: "A high-neck satin blouse paired with oatmeal wide-leg trousers for quiet-luxury office and dinner styling.", fit: "Soft blouse drape with structured high-waisted trousers." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Lilac Draped Midi Dress", subcategory: "Dresses", collection: "Party Wear", occasion: "Party", material: "Soft crepe", colors: ["Lilac", "Soft Grey"], badge: "New", description: "A refined high-neck midi dress with contemporary draping and understated accessories.", fit: "Slim through the bodice with a comfortable draped skirt." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Mint Longline Blazer Co-ord", subcategory: "Co-ord Sets", collection: "Workwear", occasion: "Work", material: "Fine suiting blend", colors: ["Mint Green", "Ivory"], badge: "New", description: "A muted-mint longline blazer styled with a tonal high-neck top and tailored wide-leg pants.", fit: "Relaxed blazer fit with straight tailored trousers." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Buttercream Pleated Knit Set", subcategory: "Skirts", collection: "Casual Wear", occasion: "Casual", material: "Fine knit and pleated crepe", colors: ["Cream", "Champagne"], badge: "New", description: "A buttercream cardigan paired with a flowing pleated midi skirt for soft seasonal layering.", fit: "Easy cardigan fit with a below-knee pleated skirt." }),
+    arrivalPick((p) => p.category === "Western Wear", { name: "Dusty Rose Modest Jumpsuit", subcategory: "Jumpsuits", collection: "Party Wear", occasion: "Party", material: "Smooth crepe", colors: ["Dusty Rose", "Nude"], badge: "New", description: "A relaxed wide-leg jumpsuit with elegant sleeves and a soft waist tie for modern modest occasionwear.", fit: "Relaxed silhouette with a softly defined waist and comfortable wide-leg shape." })
   ];
 
   const best = [
-    pick((p) => p.category === "Eastern Wear", { name: "Cream Floral Lawn Bestseller", colors: ["Cream", "Sage"], badge: "Best Seller" }),
-    pick((p) => p.category === "Ready to Wear", { name: "Sky Blue Ready To Wear Suit", colors: ["Sky Blue", "Ivory"], badge: "Best Seller" }),
-    pick((p) => p.category === "Footwear", { name: "Blush Embroidered Khussa", colors: ["Blush", "Gold"], badge: "Best Seller" }),
-    pick((p) => p.category === "Accessories", { name: "Ivory Silk Scarf Edit", colors: ["Ivory", "Nude"], badge: "Best Seller" })
+    bestPick((p) => p.category === "Eastern Wear", { name: "Cream Floral Lawn Bestseller", colors: ["Cream", "Sage"], badge: "Best Seller" }),
+    bestPick((p) => p.category === "Ready to Wear", { name: "Sky Blue Ready To Wear Suit", colors: ["Sky Blue", "Ivory"], badge: "Best Seller" }),
+    bestPick((p) => p.category === "Footwear", { name: "Blush Embroidered Khussa", colors: ["Blush", "Gold"], badge: "Best Seller" }),
+    bestPick((p) => p.category === "Accessories", { name: "Ivory Silk Scarf Edit", colors: ["Ivory", "Nude"], badge: "Best Seller" })
   ];
 
   const looks = [
@@ -1066,6 +1091,57 @@ function curatedHomepage() {
 
 function setRoute(route) {
   location.hash = route;
+}
+
+const homeRestoreKey = "velora-home-restore";
+const homeRestoreMaxAge = 30 * 60 * 1000;
+
+function readHomeRestore() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(homeRestoreKey) || "null");
+    if (!saved || Date.now() - saved.timestamp > homeRestoreMaxAge) {
+      sessionStorage.removeItem(homeRestoreKey);
+      return null;
+    }
+    return saved;
+  } catch {
+    sessionStorage.removeItem(homeRestoreKey);
+    return null;
+  }
+}
+
+function saveHomeRestore(productId, sectionId) {
+  sessionStorage.setItem(homeRestoreKey, JSON.stringify({
+    pathname: window.location.pathname,
+    scrollY: window.scrollY,
+    productId,
+    sectionId,
+    timestamp: Date.now()
+  }));
+}
+
+function clearHomeRestore() {
+  sessionStorage.removeItem(homeRestoreKey);
+}
+
+function restoreHomepagePosition(saved) {
+  if (!saved) return false;
+  const previousBehavior = document.documentElement.style.scrollBehavior;
+  document.documentElement.style.scrollBehavior = "auto";
+  const product = saved.productId ? document.querySelector(`[data-product-id="${saved.productId}"]`) : null;
+  const section = saved.sectionId ? document.getElementById(saved.sectionId) : null;
+  if (product) {
+    product.scrollIntoView({ behavior: "auto", block: "center" });
+  } else if (section) {
+    section.scrollIntoView({ behavior: "auto", block: "start" });
+  } else if (Number.isFinite(saved.scrollY)) {
+    window.scrollTo({ top: saved.scrollY, behavior: "auto" });
+  } else {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+  document.documentElement.style.scrollBehavior = previousBehavior;
+  clearHomeRestore();
+  return true;
 }
 
 function parseRoute() {
@@ -1108,7 +1184,7 @@ function header(route) {
           <a href="#shop?category=Jewellery%20%26%20Beauty">Jewelry & Beauty</a>
           <a href="#shop?audience=Teens">Teens</a>
         </nav>
-        <a class="brand brand-center" href="#home" aria-label="Velora homepage">${brandLogo("header-v-only")}</a>
+        <a class="brand brand-center" href="#home" aria-label="Velora homepage" data-logo-home>${brandLogo("header-v-only")}</a>
         <div class="header-actions text-actions">
           <button type="button" class="header-action" data-action="toggle-search">${icons.search}<span>Search</span></button>
           <a class="header-action" href="#wishlist">${icons.heart}<span>Wishlist</span><span class="text-badge">${wishlist.size}</span></a>
@@ -1143,7 +1219,7 @@ function footer() {
     <footer class="footer">
       <div class="footer-inner">
         <div>
-          <a class="brand footer-brand" href="#home">${brandLogo()}</a>
+          <a class="brand footer-brand" href="#home" data-logo-home>${brandLogo()}</a>
           <p>Premium ready-to-wear, stitched fashion, shoes, bags, jewelry, watches, scarves, and accessories for modern South Asian wardrobes.</p>
           <p>Cards, bank transfer, wallets, and cash on delivery accepted.</p>
         </div>
@@ -1207,15 +1283,15 @@ function homePage() {
       </div>
     </section>
     ${categorySection()}
-    ${productRail("Trending Now", "Fashion-forward statement pieces, viral silhouettes, and modern edits curated for the season.", home.trending)}
-    ${productRail("New Arrivals", "Fresh pastel launches, new lawn drops, summer pret, and recently released occasion pieces.", home.arrivals)}
+    ${productRail("Trending Now", "Fashion-forward statement pieces, viral silhouettes, and modern edits curated for the season.", home.trending, "home-trending")}
+    ${productRail("New Arrivals", "Fresh pastel launches, new lawn drops, summer pret, and recently released occasion pieces.", home.arrivals, "home-new-arrivals")}
     ${collectionSection()}
     ${highlightSection("Eastern Collection Highlight", "Embroidered lawn, stitched suits, modest traditional silhouettes, and 3 piece outfits made for Pakistani festive calendars.", "Eastern Wear", "assets/velora-front-campaign.png")}
     ${highlightSection("Western Collection Highlight", "Clean dresses, trousers, workwear sets, and casual separates with easy everyday styling.", "Western Wear", "photo-1483985988355-763728e1935b")}
-    ${productRail("Best Sellers", "Trusted favorites in soft tones, polished styling, and easy repeat-wear silhouettes.", home.best)}
+    ${productRail("Best Sellers", "Trusted favorites in soft tones, polished styling, and easy repeat-wear silhouettes.", home.best, "home-best-sellers")}
     ${promoSection()}
     ${reviewsSection()}
-    ${instagramSection(home.looks)}
+    ${instagramSection(home.looks, "home-shop-the-look")}
     ${newsletterSection()}
   `;
 }
@@ -1247,15 +1323,15 @@ function categorySection() {
   `;
 }
 
-function productRail(title, copy, items) {
+function productRail(title, copy, items, sectionId = "") {
   return `
-    <section class="section alt">
+    <section class="section alt" ${sectionId ? `id="${sectionId}" data-home-section` : ""}>
       <div class="section-inner">
         <div class="section-title">
           <div><h2>${title}</h2><p>${copy}</p></div>
           <a class="btn ghost" href="#shop">Shop All</a>
         </div>
-        <div class="product-grid">${items.map(productCard).join("")}</div>
+        <div class="product-grid">${items.map((item) => productCard(item, sectionId)).join("")}</div>
       </div>
     </section>
   `;
@@ -1337,12 +1413,12 @@ function reviewsSection() {
   `;
 }
 
-function instagramSection(picks = curatedHomepage().looks) {
+function instagramSection(picks = curatedHomepage().looks, sectionId = "home-shop-the-look") {
   return `
-    <section class="section">
+    <section class="section" id="${sectionId}" data-home-section>
       <div class="section-inner">
         <div class="section-title"><div><h2>Shop The Look</h2><p>Instagram-ready styling ideas for outfits, shoes, and accessories.</p></div><a class="btn ghost" href="#shop">Build a Look</a></div>
-        <div class="product-grid">${picks.map(productCard).join("")}</div>
+        <div class="product-grid">${picks.map((item) => productCard(item, sectionId)).join("")}</div>
       </div>
     </section>
   `;
@@ -1365,11 +1441,11 @@ function newsletterSection() {
   `;
 }
 
-function productCard(product) {
+function productCard(product, sectionId = "") {
   const wish = wishlist.has(product.id);
   const soldOut = product.stock <= 0;
   return `
-    <article class="product-card">
+    <article class="product-card" id="product-${product.id}" data-product-id="${product.id}" ${sectionId ? `data-section-id="${sectionId}"` : ""}>
       <a class="product-media" href="#product/${product.id}">
         ${imageTag(productImage(product), product.name, product)}
         <div class="product-badges">
@@ -1863,6 +1939,7 @@ function cartDrawer() {
 
 function render() {
   const route = parseRoute();
+  const previousPath = previousRoutePath;
   let content = "";
   if (route.path === "home") content = homePage();
   else if (route.path === "shop" || route.path === "collections") content = shopPage(route);
@@ -1876,7 +1953,22 @@ function render() {
   else if (route.path.startsWith("page/")) content = infoPage(route.path.split("/")[1]);
   else content = homePage();
   document.getElementById("app").innerHTML = appShell(content, route);
-  window.scrollTo({ top: 0, behavior: "auto" });
+  const shouldRestoreHome = route.path === "home" && previousPath.startsWith("product/");
+  if (shouldRestoreHome) {
+    const saved = readHomeRestore();
+    if (saved) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          restoreHomepagePosition(saved);
+        });
+      });
+    } else {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  } else {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+  previousRoutePath = route.path;
 }
 
 function addToCart(id) {
@@ -1911,6 +2003,24 @@ function openQuickView(id) {
   `;
   modal.classList.add("is-open");
 }
+
+document.addEventListener("click", (event) => {
+  const productLink = event.target.closest('a[href^="#product/"]');
+  if (productLink && parseRoute().path === "home") {
+    const card = productLink.closest("[data-product-id]");
+    if (card) saveHomeRestore(card.dataset.productId, card.dataset.sectionId || card.closest("[data-home-section]")?.id || "");
+  }
+
+  const logo = event.target.closest("[data-logo-home]");
+  if (!logo) return;
+  const currentPath = parseRoute().path;
+  if (currentPath === "home") {
+    clearHomeRestore();
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+  } else if (!currentPath.startsWith("product/")) {
+    clearHomeRestore();
+  }
+}, true);
 
 document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-action]");
